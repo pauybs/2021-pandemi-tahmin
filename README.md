@@ -6,4 +6,4 @@
 3-) PROJE KAPSAMI <br/>
   Bu projede kullanılan covid-19 verileri 2020 yılını kapsamaktadır. <br/>
 4-) PROJE AMACI <br/>
-Bu projenin amacı kapsamına aldığı 2020 yılı Covid-19 vaka sayılarından -bağımlı değişken- yola çıkarak 2021 yılınının Ocak ayını tahmin etmek ve bunun için bağımsız değişklen olarak zaman serisinde yaz vaka sayısı, yapay sinir ağlarında rastgele seçilen vaka sayısı, derin öğrenmede yaz vaka sayısı verisi kullanılarak problemde de beliritlen modellerin performanslarını ölçmek.
+Bu projenin amacı kapsamına aldığı 2020 yılı Covid-19 vaka sayılarından -bağımlı değişken- yola çıkarak 2021 yılınının Ocak ayını tahmin etmek ve bunun için bağımsız değişklen olarak zaman serisinde ve derin öğrenmede yaz vaka sayısı ve yapay sinir ağlarında rastgele seçilen vaka sayısı verileri kullanılarak problemde de beliritlen modellerin performanslarını ölçmek.
