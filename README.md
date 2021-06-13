@@ -1,9 +1,9 @@
 # 2021-pandemi-tahmin
 1-) PROJE HAZIRLAYAN <br/>
-  Bu projenin şimdiye kadar olan bölümünü kendim hazırladım. <br/>
+  Furkan Yusuf Bozbıyık <br/>
 2-) PROJE PROBLEMİ <br/>
-  Covid-19 vaka sayılarını tahminlemede yapay sinir ağları-LSTM-, derin öğrenme-ReLU- ve zaman serisi-forecast- modellerinin performansını hata ölçüm metrikleriyle-MSE,RMSE,MAPE,Forecast Bias, Belirlilik Katsayısı- ölçmüyle hangi modelin daha iyi olduğunu belirleme.<br/>
+  HAVA KİRLİLİĞİNİN COVİD-19 ENFEKTE SAYILARININ ETKİSİ ÜZERİNE OLAN MODELLERİN MAKİNE ÖĞRENMESİ TEKNİKLERİ ARASINDAKİ PERFORMANS KARŞILAŞTIRMASI<br/>
 3-) PROJE KAPSAMI <br/>
-  Bu projede kullanılan covid-19 verileri 2020 yılını kapsamaktadır. <br/>
+  Bu projede kullanılan COVID-19 verileri pandemi başlangıcından 2020 yılını kapsamaktadır ve hava kirliliği (PM10) veirleri de pandemi başlangıcından 2020 yılını kapsamaktadır. <br/>
 4-) PROJE AMACI <br/>
-Bu projenin amacı kapsamına aldığı 2020 yılı Covid-19 vaka sayılarından -bağımlı değişken- yola çıkarak 2021 yılınının Ocak ayını tahmin etmek ve bunun için bağımsız değişklen olarak zaman serisinde ve derin öğrenmede yaz vaka sayısı ve yapay sinir ağlarında rastgele seçilen vaka sayısı verileri kullanılarak problemde de beliritlen modellerin performanslarını ölçmek.
+Bu tezin amacı, hava kirliliği (PM10) verilerinin COVID-19 enfekte sayılarının etkisi üzerine doğrusal regresyon, destek vektör regresyon, yapay sinir ağları ve uzun-kısa süreli bellek (LSTM) tekniklerinden oluşturulan modellerin, model geliştirme sürecinden geçerek, arasındaki etkisini ölçerek performans ölçütleriyle karşılaştırma yapmaktır.
