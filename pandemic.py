@@ -13,6 +13,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
+from sklearn.preprocessing import LabelEncoder
 import keras
 
 #import matplotlib.dates as mdates
@@ -25,488 +26,171 @@ import seaborn as sns
 from datetime import datetime
 import numpy
 import math
+import tensorflow as tf
+import seaborn as sns
 
-covidDataFrame = pd.read_json("items3.json")  
+df = pd.read_excel("gun-il-ort.xlsx")
+covidDataFrame = pd.read_json('items3.json')  
 
 covidDataFrame = covidDataFrame.drop("sourceUrl",axis=1)
 covidDataFrame = covidDataFrame.drop("readMe",axis=1)
 covidDataFrame = covidDataFrame.drop("lastUpdatedAtSource",axis=1)
+#covidDataFrame= covidDataFrame.drop("lastUpdateresultpify",axis=1)
+
+
+"""
+
+covidDataFrame = covidDataFrame.drop("lastUpdatedAtSource",axis=1)
+covidDataFrame = covidDataFrame.drop("historyData",axis=1)
+covidDataFrame = covidDataFrame.drop("activeCases",axis=1)
+covidDataFrame = covidDataFrame.drop("critical",axis=1)
+covidDataFrame= covidDataFrame.drop("lastUpdateresultpify",axis=1)
+"""
+"""
+covidDataFrame= covidDataFrame.drop("hospitalDeceased",axis=1)
+covidDataFrame= covidDataFrame.drop("hospitalized",axis=1)
+covidDataFrame= covidDataFrame.drop("newlyHospitalized",axis=1)
+covidDataFrame = covidDataFrame.drop("intensiveCare",axis=1)
+covidDataFrame = covidDataFrame.drop("newlyIntensiveCare",axis=1)
+covidDataFrame = covidDataFrame.drop("recoverd",axis=1)
+"""
+
+
 covidDataFrame= covidDataFrame.drop("dailyTested",axis=1)
 covidDataFrame= covidDataFrame.drop("dailyInfected",axis=1)
 covidDataFrame= covidDataFrame.drop("dailyDeceased",axis=1)
 covidDataFrame = covidDataFrame.drop("dailyRecovered",axis=1)
 covidDataFrame = covidDataFrame.drop("critical",axis=1)
 covidDataFrame = covidDataFrame.drop("ICU",axis=1)
-covidDataFrame= covidDataFrame.drop("lastUpdateresultpify",axis=1)
 
-covidDataFrame = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2020-12"))]
+xx = df.iloc[:, : -1].values
+yy = df.iloc[:,2]
+labelemcoder_X = LabelEncoder()
+xx[:, 0] = labelemcoder_X.fit_transform(xx[:,0])
+df["AQI"] = xx[:, 0]
 
+#print(df.corr())
+#sns.pairplot(df,hue = "AQI")
+#sns.heatmap(df.corr(), annot=True, lw=1
+"""
+#france has some missing values until 2020-07-01
+if covidDataFrame["infected"] == Null:
+    covidDataFrame = covidDataFrame.drop("infected",axis=1)
+"""
+covidDataFrame = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2020-12-31"))]
+"""  
+covidDataFrame = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]>("2020-07-01"))&
+                                 ((covidDataFrame["lastUpdatedAtApify"]<("2021-01-01")))]
+"""
+    
+#iran has missing values until 2020-10
+
+#for iran dataset
+"""
+if covidDataFrame["tested"].values == "N/A":
+    covidDataFrame["tested"] = 0
+  """  
 covidDataFrame = covidDataFrame.fillna(covidDataFrame.mean())
 
-#ARIMA prediciton model
 """
-covidDataFrame["lastUpdatedAtApify"] = pd.to_datetime(covidDataFrame["lastUpdatedAtApify"])
-covidDataFrame = covidDataFrame.set_index("lastUpdatedAtApify")
+#Linear Regression
+summerData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2020-09")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-06"))]
+winterData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2021-01")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-09"))]
 
-from pmdarima import auto_arima 
-aa = auto_arima(covidDataFrame['infected'], seasonal=True, m=12,max_p=7, max_d=5,max_q=7, max_P=4, max_D=4,max_Q=4).summary()
-#print(aa)
-from statsmodels.tsa.statespace.sarimax import SARIMAX
-from statsmodels.graphics.tsaplots import plot_acf,plot_pacf 
-from statsmodels.tsa.seasonal import seasonal_decompose 
-train_data = covidDataFrame[:len(covidDataFrame)-12]
-test_data = covidDataFrame[len(covidDataFrame)-12:]
-arima_model = SARIMAX(train_data['infected'], order = (2,1,1), seasonal_order = (4,0,3,12))
-arima_result = arima_model.fit()
-ar = arima_result.summary()
-print(ar)
-arima_pred = arima_result.predict(start = len(train_data), end = len(covidDataFrame)-1, typ="levels").rename("ARIMA Predictions")
-#test_data['infected'].plot(figsize = (100,90),legend=True)
-#arima_pred.plot(legend = True)
-from sklearn.metrics import mean_squared_error
-from statsmodels.tools.eval_measures import rmse
+x_summer = df[(df["Tarih"]<("2020-09")) & (df["Tarih"]>("2020-06"))]
+x_winter = df[(df["Tarih"]<("2021-01")) & (df["Tarih"]>("2020-09"))]
 
-arima_rmse_error = rmse(test_data['infected'], arima_pred)
-arima_mse_error = arima_rmse_error**2
-mean_value = covidDataFrame['infected'].mean()
+#winterData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2020-11")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-08"))]
 
-print(f'MSE Error: {arima_mse_error}\nRMSE Error: {arima_rmse_error}\nMean: {mean_value}')
-
-covidDataFrame.index.freq = 'MS'
-
-#ax = covidDataFrame['infected'].plot(figsize = (16,5), title = "infected")
-ar.set(xlabel='Dates', ylabel='Infected');
-
-"""
-
-
-
-"""
-from sklearn.impute import SimpleImputer
-imputer = SimpleImputer(missing_values=np.nan,strategy='mean')
-imputer = imputer.fit(covidDataFrame["infected"].values)
-covidDataFrame["infected"].values = imputer.transform(covidDataFrame["infected"].values)
-"""
-
-
-
-#Tıme-series analysis forecasting
-
-"""
-covidDataFrame.lastUpdatedAtApify = pd.to_datetime(covidDataFrame.lastUpdatedAtApify)
-covidDataFrame['lastUpdatedAtApify'] = covidDataFrame['lastUpdatedAtApify'].dt.tz_localize(None)
-#print(covidDataFrame.tail())
-trace = go.Scatter(x=list(covidDataFrame.lastUpdatedAtApify),
-                   y=list(covidDataFrame.infected), line=dict(color='red'))
-dat = [trace]
-layout = dict(
-    title='Zaman Serisi Analizi',
-    xaxis=dict(
-        rangeselector=dict(
-            buttons=list([
-                dict(step='all')
-            ])
-        ),
-        rangeslider=dict(
-            visible = True
-        ),
-        type='date'
-    )
-)
-
-fig = dict(data=dat, layout=layout)
-#plotly.offline.plot(fig)
-from fbprophet import Prophet
-import fbprophet 
-df = covidDataFrame.rename(columns={'lastUpdatedAtApify': 'ds', 'infected': 'y'})
-
-fbp = fbprophet.Prophet()
-fbp.fit(df)
-df_forecast = fbp.make_future_dataframe(periods=24,freq='M')
-df_forecast = fbp.predict(df_forecast)
-fbp.plot_components(df_forecast)
-fbp.plot(df_forecast, xlabel = 'Date', ylabel = 'Infected')
-plt.title('Zaman Serisi Analizi-2')
-plt.show()
-
-
-
-def is_summer_season(ds):
-    date = pd.to_datetime(ds)
-    return (date.month < 9 and date.month > 5)
-
-
-
-df['on_season'] = df['ds'].apply(is_summer_season)
-df['off_season'] = ~df['ds'].apply(is_summer_season)
-
-
-
-
-m = Prophet(weekly_seasonality=False)
-m.add_seasonality(name='weekly_on_season', period=7, fourier_order=3, condition_name='on_season')
-m.add_seasonality(name='weekly_off_season', period=7, fourier_order=3, condition_name='off_season')
-"""
-"""
-df['on_season'] = df['ds'].apply(is_summer_season)
-df['off_season'] = ~df['ds'].apply(is_summer_season)
-"""
-"""
-forecast = m.fit(df).predict(df)
-fig = m.plot_components(forecast)
-
-forecast.to_excel(r"forecast-1.xlsx",index="false")
-df.to_excel(r"df-1.xlsx",index="false")
-
-expected = df["y"].values
-predicted = forecast["yhat"].values
-
-forecast_errors = [expected[i]-predicted[i] for i in range(len(expected))]
-bias = sum(forecast_errors) * 1.0/len(expected)
-print('Bias: %f' % bias)
-
-#LMST training and test data prediction model
-"""
-
-"""
 from sklearn.preprocessing import MinMaxScaler
-
-
-covidDataFrame['lastUpdatedAtApify'] = pd.to_datetime(covidDataFrame.lastUpdatedAtApify, format='%Y-%m-%d')
-covidDataFrame.index = covidDataFrame.lastUpdatedAtApify
-values = covidDataFrame['infected'].values.reshape(-1,1)
-#values = values.astype('float32')
-scaler = MinMaxScaler(feature_range=(0, 1))
-dataset = scaler.fit_transform(values)
-
-TRAIN_SIZE = 0.60
-train_size = int(len(dataset) * TRAIN_SIZE)
-test_size = len(dataset) - train_size
-train, test = dataset[0:train_size, :], dataset[train_size:len(dataset), :]
-print("Gün Sayıları (training set, test set): " + str((len(train), len(test))))
-
-def create_dataset(dataset, window_size = 1):
-    data_X, data_Y = [], []
-    for i in range(len(dataset) - window_size - 1):
-        a = dataset[i:(i + window_size), 0]
-        data_X.append(a)
-        data_Y.append(dataset[i + window_size, 0])
-    return(np.array(data_X), np.array(data_Y))
-
-window_size = 1
-train_X, train_Y = create_dataset(train, window_size)
-test_X, test_Y = create_dataset(test, window_size)
-print("Original training data shape:")
-print(train_X.shape)
-# Yeni verisetinin şekline bakalım.
-train_X = np.reshape(train_X, (train_X.shape[0], 1, train_X.shape[1]))
-test_X = np.reshape(test_X, (test_X.shape[0], 1, test_X.shape[1]))
-print("New training data shape:")
-print(train_X.shape)
-
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import LSTM
-def fit_model(train_X, train_Y, window_size = 1):
-    model = Sequential()
-    # Modelin tek layerlı şekilde kurulacak.
-    model.add(LSTM(100, 
-                   input_shape = (1, window_size)))
-    model.add(Dense(1))
-    model.compile(loss = "mean_squared_error", 
-                  optimizer = "adam")
-   #30 epoch yani 30 kere verisetine bakılacak.
-    model.fit(train_X, 
-              train_Y, 
-              epochs = 80, 
-              batch_size = 1, 
-              verbose = 1)
-    
-    return(model)
-# Fit the first model.
-model1 = fit_model(train_X, train_Y, window_size)
-    
-def mean_absolute_percentage_error(y_true, y_pred): 
-    y_true, y_pred = np.array(y_true), np.array(y_pred)
-    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-
-def predict_and_score(model, X, Y):
-    # Şimdi tahminleri 0-1 ile scale edilmiş halinden geri çeviriyoruz.
-    pred = scaler.inverse_transform(model.predict(X))
-    orig_data = scaler.inverse_transform([Y])
-    # Rmse değerlerini ölçüyoruz.
-    score = math.sqrt(mean_squared_error(orig_data[0], pred[:, 0]))
-    return(score, pred)
-rmse_train, train_predict = predict_and_score(model1, train_X, train_Y)
-rmse_test, test_predict = predict_and_score(model1, test_X, test_Y)
-print("Training MAPE: %.2f" % mean_absolute_percentage_error(train_Y,train_predict))
-print("Training data score: %.2f RMSE" % rmse_train)
-print("Test MAPE: %.2f" % mean_absolute_percentage_error(test_Y,test_predict))
-print("Test data score: %.2f RMSE" % rmse_test)
-
-train_predict_plot = np.empty_like(dataset)
-train_predict_plot[:, :] = np.nan
-train_predict_plot[window_size:len(train_predict) + window_size, :] = train_predict
-# Şimdi ise testleri tahminletiyoruz.
-test_predict_plot = np.empty_like(dataset)
-test_predict_plot[:, :] = np.nan
-test_predict_plot[len(train_predict) + (window_size * 2) + 1:len(dataset) - 1, :] = test_predict
-# Plot'u oluşturalım.
-plt.figure(figsize = (15, 5))
-plt.plot(scaler.inverse_transform(dataset), label = "True value")
-plt.plot(train_predict_plot, label = "Training set prediction")
-plt.plot(test_predict_plot, label = "Test set prediction")
-plt.xlabel("Days")
-plt.ylabel("Exchange Rates")
-plt.title("Comparison true vs. predicted training / test")
-plt.legend()
-plt.show()
-
-forecast_errors = [test_Y[i]-test_predict[i] for i in range(len(test_Y))]
-bias = sum(forecast_errors) * 1.0/len(test_Y)
-print('Test data Bias: %f' % bias)
-
-forecast_errors = [train_Y[i]-train_predict[i] for i in range(len(train_Y))]
-bias = sum(forecast_errors) * 1.0/len(train_Y)
-print('Training data Bias: %f' % bias)
-
-"""
-
-# Artificial neural network -relu,sigmoid- model up to line 365
-
-"""covidDataFrame['lastUpdatedAtApify']= pd.to_datetime(covidDataFrame['lastUpdatedAtApify'])
-covidDataFrame = covidDataFrame.set_index('lastUpdatedAtApify')
-"""
-#dt = datetime.datetime.strptime("%Y-%m-%d")
-"""summerData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2020-09")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-05"))]
-winterData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2020-12")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-08"))]
-
-summerData = summerData.drop("lastUpdatedAtApify",axis=1)
-winterData = winterData.drop("lastUpdatedAtApify",axis=1)
-
-
-summerData = summerData.drop("lastUpdatedAtSource",axis=1)
-winterData = winterData.drop("lastUpdatedAtSource",axis=1)
-
-summerData= summerData.drop("dailyTested",axis=1)
-summerData= summerData.drop("dailyInfected",axis=1)
-
-summerData= summerData.drop("dailyDeceased",axis=1)
-summerData= summerData.drop("dailyRecovered",axis=1)
-summerData= summerData.drop("critical",axis=1)
-summerData= summerData.drop("ICU",axis=1)
-
-winterData = winterData.drop("critical",axis=1)
-
-winterData = winterData.drop("ICU",axis=1)
-summerData= summerData.drop("lastUpdateresultpify",axis=1)
-winterData = winterData.drop("lastUpdateresultpify",axis=1)
-winterData= winterData.drop("dailyTested",axis=1)
-winterData= winterData.drop("dailyInfected",axis=1)
-
-winterData= winterData.drop("dailyDeceased",axis=1)
-winterData= winterData.drop("dailyRecovered",axis=1)
-"""
-#y = winterData["infected"].values
-
-"""
-y = (winterData["infected"]-winterData["infected"].min())/(winterData["infected"].max()-winterData["infected"].min())
-print(y)
-X = winterData.drop("infected",axis=1)
-print(X)
-"""
-
-#X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.33,random_state=10)
-"""
-from sklearn.preprocessing import MinMaxScaler
-mms = MinMaxScaler()
-X_train = mms.fit_transform(X_train) #Eğitim setine normalizasyon uygulamak
-X_test = mms.transform(X_test) #Test setine normalizasyon 
-
-"""
-"""
-from sklearn.preprocessing import StandardScaler
-sc = StandardScaler()
-X_train = sc.fit_transform(X_train)
-X_test = sc.fit_transform(X_test)
-"""
-
-"""
-import tensorflow as tf
-from keras.models import Sequential
-from keras.layers import Dense
-
-
-classifier = Sequential()
-initializer = tf.keras.initializers.RandomUniform(minval=0., maxval=1.)
-classifier.add(Dense(2,kernel_initializer=initializer,activation="relu",input_dim=3)) 
-classifier.add(Dense(2,kernel_initializer=initializer,activation="relu"))
-classifier.add(Dense(1,kernel_initializer=initializer,activation="sigmoid"))
-classifier.compile(optimizer="adam",loss="MSE", metrics=[tf.keras.metrics.Accuracy()])
-classifier.fit(X_train,y_train,epochs=50)
-y_pred=classifier.predict(X_test)
-"""
-
-"""
-from xgboost import XGBClassifier
-classifier = XGBClassifier()
-classifier.fit(X_train,y_train)
-
-y_pred = classifier.predict(X_test)
-"""
-
-"""
-sc = classifier.score(X_test, y_pred)
-
-print(sc)
-"""
-
-"""
-from sklearn import metrics
-
-print(metrics.accuracy_score(y_test, y_pred))
-
-predictions = [round(value) for value in y_pred]
-from sklearn.metrics import accuracy_score
-accuracy = accuracy_score(y_test, predictions)
-mse = mean_squared_error(y_pred, y_test)
-print("Accuracy: %.2f%%" % (accuracy * 100.0))
-"""
-
-"""
-kayıpVeri = pd.DataFrame(classifier.history.history)
-kayıpVeri.plot()
-
-plt.show()
-"""   
-
-# Artificial neural network -relu- model up to line 456
-
-"""
-summerData = summerData.drop("lastUpdatedAtApify",axis=1)
-winterData= winterData.drop("lastUpdatedAtApify",axis=1)
-
-summerData = summerData.drop("lastUpdatedAtSource",axis=1)
-winterData = winterData.drop("lastUpdatedAtSource",axis=1)
-summerData= summerData.drop("dailyTested",axis=1)
-summerData= summerData.drop("dailyInfected",axis=1)
-
-summerData= summerData.drop("dailyDeceased",axis=1)
-summerData= summerData.drop("dailyRecovered",axis=1)
-summerData= summerData.drop("critical",axis=1)
-summerData= summerData.drop("ICU",axis=1)
-
-winterData = winterData.drop("critical",axis=1)
-
-winterData = winterData.drop("ICU",axis=1)
-summerData= summerData.drop("lastUpdateresultpify",axis=1)
-winterData = winterData.drop("lastUpdateresultpify",axis=1)
-winterData= winterData.drop("dailyTested",axis=1)
-winterData= winterData.drop("dailyInfected",axis=1)
-
-winterData= winterData.drop("dailyDeceased",axis=1)
-winterData= winterData.drop("dailyRecovered",axis=1)
-
-
-print(summerData.describe())
-print(summerData.isnull().sum(),np.any(np.isnan(summerData)))
-y = (winterData["infected"]-winterData["infected"].min())/(winterData["infected"].max()-winterData["infected"].min())
-x = summerData.drop("infected",axis=1).values
-#y = summerData["infected"].values
-#x = summerData.drop("infected",axis=1).values
-
-X_train,X_test,y_train,y_test = train_test_split(x,y,test_size=0.3,random_state=10)
-#print(len(X_train),len(X_test))
 scaler = MinMaxScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.fit_transform(X_test)
-print(X_train.shape)
 
-model = Sequential()
-model.add(Dense(3,activation="relu"))
-model.add(Dense(3,activation="relu"))
-model.add(Dense(3,activation="relu"))
-model.add(Dense(3,activation="relu"))
+#X PM10, y infected
 
-model.add(Dense(1))
+#kış
+#X = x_winter["Ortalama"].values
+#y = winterData["infected"].values
+#yaz
 
-model.compile(optimizer="adam",loss="mse")
 
-model.fit(x=X_train,y=y_train,validation_data=(X_test,y_test),epochs=80)
-
-kayıpVeri = pd.DataFrame(model.history.history)
-kayıpVeri.plot()
-
-plt.show()
+X = x_summer["Ortalama"].values
+y = summerData["infected"].values
 """
-
-
 """
-cvscores = []
-scores = model.evaluate(X_test, y_test, verbose=0)
-print((model.metrics_names, scores*100))
-cvscores.append(scores * 100)
-print("%.2f%% (+/- %.2f%%)" % (numpy.mean(cvscores), numpy.std(cvscores)))
-
-accuracy_score(y_test, y_pred)
+#yaz
+X = summerData["infected"].values
+y = x_summer["AQI"].values 
 """
-
+#kış
+#X = winterData["infected"].values
+#y = x_winter["AQI"].values 
 """
-from sklearn.model_selection import cross_val_score
-success = cross_val_score(estimator = model,X=X_train,y=y_train,cv=4)
-print(success.mean())
-"""
+length = len(X)
+X = X.reshape((length,1))
+length1 = len(y)
+y = y.reshape((length1,1))
+scaler.fit(X)
+X = scaler.transform(X)
+scaler.fit(y)
+y = scaler.transform(y)
 
-"""
-
-tahminDizisi = model.predict(X_test)
-mean_absolute_error=mean_absolute_error(y_test,tahminDizisi)
-print(mean_absolute_error)
-plt.scatter(y_test,tahminDizisi)
-plt.plot(y_test,y_test,"g-*")
-
-r2_Deep = r2_score(y_test,tahminDizisi)
-print("r2_deep_learn",r2_Deep)
-
+plt.scatter(X,y,color="red")
+plt.title("Kış Veriler")
+plt.xlabel("X")
+plt.ylabel("y")
 plt.show()
 
-"""
 
-# Linear Regression model 
-"""
-lin = linear_model.LinearRegression()
-X = (summerData["infected"]-summerData["infected"].min())/(summerData["infected"].max()-summerData["infected"].min())
-y = (winterData["infected"]-winterData["infected"].min())/(winterData["infected"].max()-winterData["infected"].min())
-#print(X,y)
-plt.scatter(X.values,y.values)
-plt.xlabel('x')
-plt.ylabel('Y')
-plt.title('X(Yaz verisi) y(kış verisi) arasındaki ilişki')
-plt.show()
-#plt.show()"""
-"""lineer_regresyon = LinearRegression()
-lineer_regresyon.fit(X.values.reshape(-1,1),y.values.reshape(-1,1))
+X_train,X_test,y_train,y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+lineer_regresyon = LinearRegression()
+lineer_regresyon.fit(X_train,y_train)
 print("Elde edilen regresyon modeli: Y={}+{}X".format(lineer_regresyon.intercept_,lineer_regresyon.coef_[0]))
-y_predicted = lineer_regresyon.predict(X.values.reshape(-1,1))
-r2 = r2_score(y,y_predicted)
-print("Model ",round(r2,4)," oranında verilere uyum sağladı.")
-print("Ortalama Mutlak Hata: {} \nOrtalama Karesel Hata: {}".format(
- mean_absolute_error(y, y_predicted), mean_squared_error(y, y_predicted)))
-#print(f1_score())
-random_x = np.array([0, 0.5, 0.99])
-plt.scatter(X.values, y.values,color="blue")
-plt.plot(random_x,
-         lineer_regresyon.intercept_[0] +
-         lineer_regresyon.coef_[0][0] * random_x,
-         color='red',
-         label='regresyon grafiği',
+y_pred = lineer_regresyon.predict(X_test)
+y_pred_train = lineer_regresyon.predict(X_train)
+
+plt.scatter(X_train,y_train,color="red", label='Gerçek Veri')
+plt.plot(X_train, lineer_regresyon.predict(X_train),
+         color = "blue",
+         label='Tahmin Verisi',
          linewidth = "2")
-plt.xlabel('x')
-plt.ylabel('Y')
-plt.title('X y regresyon analizi')  
+plt.xlabel('COVID-19 Vaka Sayısı ')
+plt.ylabel('AQI')
+plt.title('Yaz Mevsimi COVID-19 Vaka Sayısı Ve AQI Verileri (Eğitim)')
 plt.show()
+
+
+#random_x = np.array([0, 0.5, 0.99])
+plt.scatter(X_test, y_test, color="red", label='Gerçek Veri')
+plt.plot(X_train, lineer_regresyon.predict(X_train),
+         color = "blue",
+         label='Tahmin Verisi',
+         linewidth = "2")
+plt.xlabel('COVID-19 Vaka Sayısı ')
+plt.ylabel('AQI')
+plt.title('Yaz mevsimi COVID-19 Vaka Sayısı Ve AQI Verileri (Test)')
+plt.show()
+
+from sklearn.metrics import median_absolute_error
+from math import sqrt
+
+print("Test\n")
+print("R-Kare: ",r2_score(y_test, y_pred))
+print("MAE: ",mean_absolute_error(y_test, y_pred))
+print("MSE: ",mean_squared_error(y_test, y_pred))
+print("RMSE: ",sqrt(mean_squared_error(y_test, y_pred)))
+print("MedAE: ",median_absolute_error(y_test, y_pred))
+
+print("Eğitim\n")
+print("R-Kare: ",r2_score(y_train,  y_pred_train))
+print("MAE: ",mean_absolute_error(y_train, y_pred_train))
+print("MSE: ",mean_squared_error(y_train, y_pred_train))
+print("RMSE: ",sqrt(mean_squared_error(y_train, y_pred_train)))
+print("MedAE: ",median_absolute_error(y_train, y_pred_train))
+
 """
-"""plt.scatter(summerData["lastUpdatedAtApify"],summerData["infected"])
+"""
+
+plt.scatter(summerData["lastUpdatedAtApify"],summerData["infected"])
 plt.xlabel('Tarih')
 plt.ylabel('Enfekte Sayısı')
 plt.title('Yaz Ayları Enfekte Sayısı Grafiği')
@@ -516,13 +200,454 @@ plt.scatter(winterData["lastUpdatedAtApify"],winterData["infected"],color="blue"
 plt.xlabel('Tarih')
 plt.ylabel('Enfekte Sayısı')
 plt.title('Kış Ayları Enfekte Sayısı Grafiği')
-plt.show()"""
-"""lin.fit(Xsample, ysample)
-t0, t1 = lin.intercept_[0], lin.coef_[0][0]
-print(t0,t1)
-
-locSummer = summerData["infected"]
-predicted = lin.predict( locSummer)[0]
-print(predicted)
+plt.show()
 """
+
+# Meteorological Artifical Neural Network
+"""
+summerData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2020-09")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-06"))]
+winterData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2021-01")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-09"))]
+
+x_summer = df[(df["Tarih"]<("2020-09")) & (df["Tarih"]>("2020-06"))]
+x_winter = df[(df["Tarih"]<("2021-01")) & (df["Tarih"]>("2020-09"))]
+
+#winterData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2020-11")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-08"))]
+
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+
+#X PM10, y infected
+"""
+"""
+#kış
+X = x_winter["Ortalama"].values
+y = winterData["infected"].values
+"""
+#yaz
+#X = x_summer["Ortalama"].values
+#y = summerData["infected"].values
+"""
+
+#yaz
+X = summerData["infected"].values
+y = x_summer["Ortalama"].values 
+
+#kış
+#X = winterData["infected"].values
+#y = x_winter["Ortalama"].values 
+
+length = len(X)
+X = X.reshape((length,1))
+length1 = len(y)
+y = y.reshape((length1,1))
+scaler.fit(X)
+X = scaler.transform(X)
+scaler.fit(y)
+y = scaler.transform(y)
+
+"""
+"""
+plt.scatter(X,y,color="red")
+plt.title("Yaz Veriler")
+plt.xlabel("X")
+plt.ylabel("y")
+plt.show()
+"""
+"""
+X_train,X_test,y_train,y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+
+from keras.models import Sequential
+from keras.layers import Dense
+
+classifier = Sequential()
+
+initializer = tf.keras.initializers.HeUniform()
+
+classifier.add(Dense(12, kernel_initializer=initializer, activation = "relu", input_dim = 1))
+
+classifier.add(Dense(12, kernel_initializer=initializer, activation = "relu"))
+
+classifier.add(Dense(1, kernel_initializer=initializer, activation = "sigmoid"))
+
+classifier.compile(optimizer = "adam", loss="MSE")
+
+history = classifier.fit(X_train,y_train,validation_data=(X_test,y_test),batch_size= 12, epochs= 150)
+
+y_pred_ANN = classifier.predict(X_test)
+
+lossData = pd.DataFrame(history.history)
+lossData.plot()
+plt.show()
+
+from sklearn.metrics import median_absolute_error
+
+print("R-Kare: ",r2_score(y_test, y_pred_ANN))
+print("MAE: ",mean_absolute_error(y_test, y_pred_ANN))
+print("MSE: ",mean_squared_error(y_test, y_pred_ANN))
+print("MedAE: ",median_absolute_error(y_test, y_pred_ANN))
+
+for i in classifier.layers:
+    first_layer = classifier.layers[0].get_weights()
+    second_layer = classifier.layers[1].get_weights()
+    output_layer = classifier.layers[2].get_weights()   
+
+scaler_inverse = scaler.inverse_transform(y_pred_ANN.reshape(-1,1))
+
+"""
+
+# Meteorological Recurrence Neural Network (LSTM)
+
+"""
+summerData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2020-09")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-06"))]
+winterData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2021-01")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-09"))]
+
+x_summer = df[(df["Tarih"]<("2020-09")) & (df["Tarih"]>("2020-06"))]
+x_winter = df[(df["Tarih"]<("2021-01")) & (df["Tarih"]>("2020-09"))]
+
+#winterData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2020-11")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-08"))]
+
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+#X PM10, y infected
+"""
+#kış
+#X = x_winter["Ortalama"].values
+#y = winterData["infected"].values
+"""
+#yaz
+X = x_summer["Ortalama"].values
+y = summerData["infected"].values
+"""
+"""
+
+#yaz
+#X = summerData["infected"].values
+#y = x_summer["Ortalama"].values 
+
+#kış
+X = winterData["infected"].values
+y = x_winter["Ortalama"].values 
+
+length = len(X)
+X = X.reshape((length,1))
+length1 = len(y)
+y = y.reshape((length1,1))
+scaler.fit(X)
+X = scaler.transform(X)
+scaler.fit(y)
+y = scaler.transform(y)
+"""
+"""
+
+plt.scatter(X,y,color="red")
+plt.title("Yaz Veriler")
+plt.xlabel("X")
+plt.ylabel("y")
+plt.show()
+"""
+"""
+X_train,X_test,y_train,y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+
+
+	
+# reshape input to be [samples, time steps, features]
+X_train = numpy.reshape(X_train, (X_train.shape[0], 1, X_train.shape[1]))
+X_test = numpy.reshape(X_test, (X_test.shape[0], 1, X_test.shape[1]))
+
+from keras.models import Sequential
+from keras.layers import Dense
+
+from keras.layers import LSTM
+from keras.layers import Dropout
+
+
+
+classifier = Sequential()
+
+
+classifier.add(LSTM(6,
+               input_shape=(1,1),     
+               return_sequences=True))
+classifier.add(Dropout(0.2))
+
+classifier.add(LSTM(4,return_sequences=True))
+
+classifier.add(Dropout(0.2))
+
+
+
+classifier.add(Dense(1))
+
+#model.compile(loss='mse', optimizer='rmsprop')
+
+classifier.compile(optimizer = "adam", loss="MSE")
+#yaz
+history = classifier.fit(X_train,
+          y_train,
+          batch_size=4,
+         validation_data=(X_test,y_test),
+          verbose=1,
+          epochs=75,
+          )
+#kış
+"""
+"""
+history = classifier.fit(X_train,
+          y_train,
+          batch_size=4,
+         validation_data=(X_test,y_test),
+          verbose=1,
+          epochs=75,
+          )
+"""
+"""
+y_pred_LSTM = classifier.predict(X_test)
+
+y_pred_LSTM_train = classifier.predict(X_train)
+
+lossData = pd.DataFrame(history.history)
+lossData.plot()
+plt.show()
+
+nsamples, nx, ny = y_pred_LSTM.shape
+test_dataset = y_pred_LSTM.reshape((nsamples,nx*ny))
+
+"""
+"""
+nsamples1, nx1, ny1 = y_pred_LSTM_train.shape
+train_dataset = y_pred_LSTM_train.reshape((nsamples1,nx1*ny1))
+
+trainPredictPlot = numpy.empty_like(df.values)
+trainPredictPlot[:, :] = numpy.nan
+trainPredictPlot[1:len(y_pred_LSTM_train)+1, ] = train_dataset
+# shift test predictions for plotting
+testPredictPlot = numpy.empty_like(df.values)
+testPredictPlot[:, :] = numpy.nan
+testPredictPlot[len(y_pred_LSTM_train)+(1*2)+1:len(df.values)-1, :] = test_dataset
+# plot baseline and predictions
+plt.plot(scaler.inverse_transform(df.values))
+plt.plot(trainPredictPlot)
+plt.plot(testPredictPlot)
+plt.show()
+"""
+
+"""
+from sklearn.metrics import median_absolute_error
+from math import sqrt
+
+print("R-Kare: ",r2_score(y_test, test_dataset))
+print("MAE: ",mean_absolute_error(y_test, test_dataset))
+print("MSE: ",mean_squared_error(y_test, test_dataset))
+print("RMSE: ",sqrt(mean_squared_error(y_test, test_dataset)))
+print("MedAE: ",median_absolute_error(y_test, test_dataset))
+
+for i in classifier.layers:
+    first_layer = classifier.layers[0].get_weights()
+    second_layer = classifier.layers[2].get_weights()
+    output_layer = classifier.layers[4].get_weights() 
+    
+
+scaler_inverse = scaler.inverse_transform(y_pred_LSTM.reshape(-1,1))
+"""
+
+#SVM
+"""
+summerData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2020-09")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-06"))]
+winterData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2021-01")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-09"))]
+
+x_summer = df[(df["Tarih"]<("2020-09")) & (df["Tarih"]>("2020-06"))]
+x_winter = df[(df["Tarih"]<("2021-01")) & (df["Tarih"]>("2020-09"))]
+
+#winterData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2020-11")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-08"))]
+
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+
+#X PM10, y infected
+"""
+#kış
+"""
+X = x_winter["Ortalama"].values
+y = winterData["infected"].values
+"""
+#yaz
+#X = x_summer["Ortalama"].values
+#y = summerData["infected"].values
+"""
+
+#yaz
+X = summerData["infected"].values
+y = x_summer["AQI"].values 
+
+#kış
+#X = winterData["infected"].values
+#y = x_winter["Ortalama"].values 
+
+
+length = len(X)
+X = X.reshape((length,1))
+length1 = len(y)
+y = y.reshape((length1,1))
+scaler.fit(X)
+X = scaler.transform(X)
+scaler.fit(y)
+y = scaler.transform(y)
+
+X_train,X_test,y_train,y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+"""
+"""
+X_train = scaler.fit_transform(X_train.reshape(-1,1))
+X_test = scaler.fit_transform(X_test.reshape(-1,1))
+y_train = scaler.fit_transform(y_train.reshape(-1,1))
+y_test = scaler.fit_transform(y_test.reshape(-1,1))
+"""
+"""
+
+from sklearn.svm import SVC
+
+classifier = SVC(kernel = "rbf", random_state = 0, C=1.0, degree=3, gamma="auto")
+classifier.fit(X_train,y_train)
+y_pred = classifier.predict(X_test)
+
+from sklearn.metrics import confusion_matrix, classification_report
+
+cm = confusion_matrix(y_test, y_pred)   
+
+from matplotlib import colors
+from matplotlib.colors import ListedColormap
+
+colors1 = ["#DBDBDB","#DCD5CC","#DCCEBE","#DDC8AF","#DEC2A0","#DEBB91", "#DFB583", "#DFAE74", "#E0A865", "#E1A256", "#E19B48", "#E29539"]
+colors2 = colors.ListedColormap(colors1)
+
+def evaluationCriteria(report, title = None, cmap = colors2):
+    lines =  report.split("\n")
+    classLabels = []
+    lists = []
+    
+    for i in lines[2:len(lines)-3]:
+        s = i.split()
+        classLabels.appends(s[0])
+        value = [float(x) for x in s[1: len(s) - 1]]
+        lists.appends(value)
+
+    fig, ax = plt.subplot(1)
+    
+    for column in range(len(lists)+1):
+        txt = lists[lines][column]
+        ax.text(column, lines, lists[lines][column],va="center", ha = "center")
         
+    fig = plt.imshow(lists, interpolation = "nearest", cmap = cmap)
+    plt.title("Sınıflandırma İçin Değerlendirme Ölçütleri")
+    plt.colorbar()
+    X_ticks = np.arange(len(classLabels)+1)
+    y_ticks = np.arange(len(classLabels))
+    plt.xticks(X_ticks, ["Kesinlik", "Duyarlılık", "F-Skoru"],rotation = 45)
+    plt.yticks(y_ticks, classLabels)
+    plt.ylabel("Sınıflar")
+    plt.xlabel("Ölçütler")
+    plt.show()
+    
+report = classification_report(y_test, y_pred)
+evaluationCriteria(report)
+
+scaler_inverse = scaler.inverse_transform(y_pred.reshape(-1,1))
+"""
+
+#SVR
+
+"""
+summerData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2020-09")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-06"))]
+winterData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2021-01")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-09"))]
+
+x_summer = df[(df["Tarih"]<("2020-09")) & (df["Tarih"]>("2020-06"))]
+x_winter = df[(df["Tarih"]<("2021-01")) & (df["Tarih"]>("2020-09"))]
+
+#winterData = covidDataFrame[(covidDataFrame["lastUpdatedAtApify"]<("2020-11")) & (covidDataFrame["lastUpdatedAtApify"]>("2020-08"))]
+
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+
+#X PM10, y infected
+
+
+#kış
+X = x_winter["Ortalama"].values
+y = winterData["infected"].values
+
+#yaz
+#X = x_summer["Ortalama"].values
+#y = summerData["infected"].values
+"""
+"""
+#yaz
+X = x_summer["Ortalama"].values 
+y = summerData["infected"].values 
+
+#kış
+#X = x_winter["Ortalama"].values 
+#y = winterData["infected"].values 
+"""
+"""
+length = len(X)
+X = X.reshape((length,1))
+length1 = len(y)
+y = y.reshape((length1,1))
+scaler.fit(X)
+X = scaler.transform(X)
+scaler.fit(y)
+y = scaler.transform(y)
+
+X_train,X_test,y_train,y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+
+
+#from sklearn.svm import SVR
+
+model = SVR(kernel = "rbf", C=1.0, degree=2, gamma="auto", epsilon = 0.1)
+model.fit(X_train,y_train)
+
+y_pred = model.predict(X_test)
+y_pred_train = model.predict(X_train)
+#Modelin grafiğinin çizilmesi
+
+#Eğitim
+
+X_grid = np.arange(min(X_train),max(X_train),0.1)
+X_grid = X_grid.reshape((len(X_grid),1))
+plt.scatter(X_train, y_train, color = "red")
+plt.plot(X_grid, model.predict((X_grid)),color="blue")
+plt.title("Destek Vektör Regresyonu Yaz Eğitim Verileri")
+plt.xlabel("PM10")
+plt.ylabel("COVID-19 Vaka Sayısı")
+plt.show()
+
+
+#Test
+
+X_grid = np.arange(min(X_test),max(X_train),0.1)
+X_grid = X_grid.reshape((len(X_grid),1))
+plt.scatter(X_test, y_test, color = "red")
+plt.plot(X_grid, model.predict((X_grid)),color="blue")
+plt.title("Destek Vektör Regresyonu Yaz Test Verileri")
+plt.xlabel("PM10")
+plt.ylabel("COVID-19 Vaka Sayısı")
+plt.show()
+
+
+from sklearn.metrics import median_absolute_error
+from math import sqrt
+#print("Elde edilen regresyon modeli: Y={}+{}X".format(SVR.intercept_,SVR.coef_[0]))
+print("Test\n")
+print("R-Kare: ",r2_score(y_test,  y_pred))
+print("MAE: ",mean_absolute_error(y_test, y_pred))
+print("MSE: ",mean_squared_error(y_test, y_pred))
+print("RMSE: ",sqrt(mean_squared_error(y_test, y_pred)))
+print("MedAE: ",median_absolute_error(y_test, y_pred))
+print("Eğitim\n")
+print("R-Kare: ",r2_score(y_train,  y_pred_train))
+print("MAE: ",mean_absolute_error(y_train, y_pred_train))
+print("MSE: ",mean_squared_error(y_train, y_pred_train))
+print("RMSE: ",sqrt(mean_squared_error(y_train, y_pred_train)))
+print("MedAE: ",median_absolute_error(y_train, y_pred_train))
+
+scaler_inverse = scaler.inverse_transform(y_pred.reshape(-1,1))
+"""
