@@ -1,5 +1,5 @@
 # 2021-pandemi-tahmin
-1-) TEZİ HAZIRLAYAN <br/>
+1-) TEZİ HAZIRLAYAN <br/><br/>
   Furkan Yusuf Bozbıyık <br/><br/>
 2-) TEZİN BAŞLIĞI <br/><br/>
   Hava Kirliliğinin Covid-19 Enfekte Sayılarının Etkisi Üzerine Olan Modellerin Makine Öğrenmesi Teknikleri Arasındaki Performans Karşılaştırması<br/><br/>
