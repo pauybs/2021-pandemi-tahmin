@@ -2,7 +2,7 @@
 1-) PROJE HAZIRLAYAN <br/>
   Furkan Yusuf Bozbıyık <br/>
 2-) PROJE BAŞLIĞI <br/>
-  HAVA KİRLİLİĞİNİN COVİD-19 ENFEKTE SAYILARININ ETKİSİ ÜZERİNE OLAN MODELLERİN MAKİNE ÖĞRENMESİ TEKNİKLERİ ARASINDAKİ PERFORMANS KARŞILAŞTIRMASI<br/>
+  Hava Kirliliğinin Covid-19 Enfekte Sayılarının Etkisi Üzerine Olan Modellerin Makine Öğrenmesi Teknikleri Arasındaki Performans Karşılaştırması<br/>
 3-) PROJE KAPSAMI <br/>
   Bu projede kullanılan COVID-19 Türkiye geneli verileri pandemi başlangıcından 2020 yılını kapsamaktadır ve hava kirliliği (PM10) Türkiye geneli verileri de pandemi başlangıcından 2020 yılını kapsamaktadır. <br/>
 4-) PROJE AMACI <br/>
